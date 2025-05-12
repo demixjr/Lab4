@@ -43,8 +43,6 @@ namespace Lab_4
                             exit = true;
                             break;
                         case 1:
-                            try
-                            {
                                 Console.WriteLine("Введіть нікнейм");
                                 string username = Console.ReadLine();
                                 Console.WriteLine("Введіть пароль");
@@ -55,16 +53,11 @@ namespace Lab_4
                                 }
                                 else
                                     Console.WriteLine("Не вдалось додати користувача");
-                            }
-                            catch (ValidationException vex)
-                            {
-                                Console.WriteLine(vex.ToString());
-                            }
+
                             break;
 
                         case 2:
-                            try
-                            {
+                            
                                 Console.WriteLine("Введіть нікнейм");
                                 string username2 = Console.ReadLine();
                                 Console.WriteLine("Введіть пароль");
@@ -209,15 +202,7 @@ namespace Lab_4
                                 }
                                 else
                                     Console.WriteLine("Не вдалося увійти в акаунт");
-                            }
-                            catch (ValidationException vex)
-                            {
-                                Console.WriteLine(vex.ToString());
-                            }
-                            catch (Exception ex)
-                            {
-                                Console.WriteLine(ex.Message);
-                            }
+                          
                             break;
 
                         case 3:
