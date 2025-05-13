@@ -34,3 +34,5 @@ D:\oop\c#\course2\Lab5\Lab_4\obj\Debug\UI.csproj.CoreCompileInputs.cache
 D:\oop\c#\course2\Lab5\Lab_4\obj\Debug\UI.csproj.Up2Date
 D:\oop\c#\course2\Lab5\Lab_4\obj\Debug\Lab_4.exe
 D:\oop\c#\course2\Lab5\Lab_4\obj\Debug\Lab_4.pdb
+D:\oop\c#\course2\Lab5\Lab_4\bin\Debug\AutoMapper.dll
+D:\oop\c#\course2\Lab5\Lab_4\bin\Debug\AutoMapper.xml

@@ -17,10 +17,10 @@ namespace Lab_4
         public void Menu()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
- 
+
             bool exit = false;
 
-            TestInfoForDB();
+          //  TestInfoForDB();
 
             while (!exit)
             {
@@ -116,10 +116,8 @@ namespace Lab_4
                                                     Console.WriteLine("Введіть назву оголошення для видалення:");
                                                     string titleForDel = Console.ReadLine();
                                                     
-                                                    Console.WriteLine("Введіть пароль для підтвердження особи");
-                                                    string passwordForDel = Console.ReadLine();
 
-                                                    if (facade.DeleteAnnouncement(titleForDel, username2, passwordForDel))
+                                                    if (facade.DeleteAnnouncement(titleForDel, username2))
                                                         Console.WriteLine("Оголошення успішно видалено");
                                                     else
                                                         Console.WriteLine("Не вдалося видалити оголошення");
@@ -168,14 +166,14 @@ namespace Lab_4
                                                 case 8:
                                                     Console.WriteLine("Введіть новий пароль:");
                                                     string newPassword = Console.ReadLine();
-                                                    if (facade.ChangeUserPassword(username2, password2, newPassword))
+                                                    if (facade.ChangeUserPassword(username2, newPassword))
                                                         Console.WriteLine("Пароль змінено");
                                                     else
                                                         Console.WriteLine("Не вдалося змінити пароль");
                                                     break;
 
                                                 case 9:
-                                                    if (facade.DeleteUser(username2,password2))
+                                                    if (facade.DeleteUser(username2))
                                                     {
                                                         Console.WriteLine("Акаунт видалено");
                                                         userCycle = false;
@@ -189,10 +187,14 @@ namespace Lab_4
                                                     break;
                                             }
                                         
-                                        } 
+                                        }
+                                         catch(EntityNotFoundException enfx)
+                                        {
+
+                                        }
                                         catch(ValidationException vex)
                                         {
-                                            Console.WriteLine(vex.ToString());
+                                            
                                         }
                                         catch(Exception ex)
                                         {
@@ -265,11 +267,15 @@ namespace Lab_4
 
                     }
 
-
+                
+                }
+                catch(EntityNotFoundException entf)
+                {
+                    Console.WriteLine(entf.Message);
                 }
                 catch (ValidationException vex)
                 {
-                    Console.WriteLine(vex.ToString());
+                    Console.WriteLine(vex.Message);
                 }
                 catch (Exception ex)
                 {
@@ -278,7 +284,7 @@ namespace Lab_4
             }
         }
 
-        public void TestInfoForDB()
+    /*    public void TestInfoForDB()
         {
             facade.AddHeading("Нерухомість");
             facade.AddCategory("Продаж", "Нерухомість");
@@ -389,6 +395,7 @@ namespace Lab_4
                 "user4"
             );
         }
+    */
     }
 
     
