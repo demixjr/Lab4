@@ -1,37 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
+using System.Xml.Linq;
 using DAL;
 
 namespace BLL
 {
     public class TagService
     {
-        public bool AddTag(BoardContext context, Tag tag)
+        IMapper mapper;
+        public TagService(IMapper mapper)
         {
-            context.Tags.Add(tag);
-            context.SaveChanges();
+            this.mapper = mapper;
+        }
+
+        public bool AddTag(UnitOfWork unitOfWork, TagDto tagDto)
+        {
+            if (FindTagByName(unitOfWork, tagDto.Name) != null)
+                throw new ValidationException("Такий тег вже існує");
+
+            var tag = mapper.Map<Tag>(tagDto);
+            unitOfWork.GetRepository<Tag>().Add(tag);
+            unitOfWork.Save();
             return true;
         }
 
-        public Tag FindTagByName(BoardContext context, string tagName)
+        public TagDto FindTagByName(UnitOfWork unitOfWork, string tagName)
         {
-            return context.Tags.FirstOrDefault(t => t.Name != null && t.Name.ToLower() == tagName.ToLower());
+            return mapper.Map<TagDto>(unitOfWork.GetRepository<Tag>().Find(c => c.Name == tagName));
         }
-        public List<Tag> FindAllTags(BoardContext context)
+        public List<TagDto> FindAllTags(UnitOfWork unitOfWork)
         {
-            return context.Tags.ToList(); 
+            return mapper.Map<List<TagDto>>(unitOfWork.GetRepository<Tag>().GetAll());
         }
-        public bool DeleteTag(BoardContext context, string tagName)
-        {
-            Tag tag = FindTagByName(context, tagName);
-            if (tag != null)
-            {
-                context.Tags.Remove(tag);
-                context.SaveChanges();
-                return true;
-            }
-            return false;
-        }
+
     }
 }

@@ -5,13 +5,15 @@ using DAL;
 using System.Linq;
 using System.Dynamic;
 using System.Text;
+using AutoMapper;
 
 namespace BLL
 {
     public class ServiceFacade
     {
 
-        BoardContext context;
+        UnitOfWork unitOfWork;
+        IMapper mapper;
         Validation validation;
         UserService userService;
         TagService tagService;
@@ -21,14 +23,20 @@ namespace BLL
         SubcategoryService subcategoryService;
         public ServiceFacade()
         {
-            context = new BoardContext();
+            BoardContext boardContext = new BoardContext();
+            unitOfWork = new UnitOfWork(boardContext);
             validation = new Validation();
-            userService = new UserService();
-            tagService = new TagService();
-            headingService = new HeadingService();
-            categoryService = new CategoryService();
-            subcategoryService = new SubcategoryService();
-            announcementService = new AnnouncementService();
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<MappingProfile>();
+            });
+            mapper = config.CreateMapper();
+            userService = new UserService(mapper);
+            tagService = new TagService(mapper);
+            headingService = new HeadingService(mapper);
+            categoryService = new CategoryService(mapper);
+            subcategoryService = new SubcategoryService(mapper);
+            announcementService = new AnnouncementService(mapper);
         }
 
 
@@ -39,47 +47,58 @@ namespace BLL
         {
             if(validation.IsUsernameValid(username) && validation.IsPasswordValid(password))
             {
-                User newUser = new User(username, password); 
-                if(userService.AddUser(context, newUser))
+                UserDto newUser = new UserDto
+                {
+                    Username = username,
+                    Password = password
+                }; 
+                if(userService.AddUser(unitOfWork, newUser))
                     return true;
             }
             return false;
         }
 
-        public bool ChangeUserPassword(string username, string oldPassword, string newPassword)
+        public bool ChangeUserPassword(string username, string newPassword)
         {
             if (!validation.IsPasswordValid(newPassword))
                 return false;
-
-            return userService.ChangeUserPassword(context, username, oldPassword, newPassword);
+            UserDto userDto = new UserDto
+            {
+                Username = username
+            };
+            return userService.ChangeUserPassword(unitOfWork, userDto, newPassword);
         }
         public string FindUsersAnnouncements(string username)
         {
-            User user = userService.FindUserByUsername(context, username);
+            UserDto userDto = userService.FindUserByUsername(unitOfWork, username);
+            var announcements = userDto.Announcements;
             string allAnnouncements = "";
-            var announcements = user.Announcements;
-            foreach(Announcement announcement in announcements)
+            foreach(var announcement in announcements)
             {
                 allAnnouncements += announcement.GetInfo();
             }
             return allAnnouncements;
         }
-        public User FindUser(string username)
+        public UserDto FindUser(string username)
         {
-            return userService.FindUserByUsername(context, username);
+            return userService.FindUserByUsername(unitOfWork, username);
         }
         public bool UserLogin(string username, string password)
         {
-            User user = FindUser(username);
+            UserDto user = FindUser(username);
             if (user != null && user.Password == password)
             {
                 return true;
             }
             return false;
         }
-        public bool DeleteUser(string username, string password)
+        public bool DeleteUser(string username)
         {
-            return userService.DeleteUser(context, username, password);
+            UserDto userDto = new UserDto
+            {
+                Username = username
+            };
+            return userService.DeleteUser(unitOfWork, userDto);
         }
 
         
@@ -90,25 +109,27 @@ namespace BLL
         {
             if (validation.IsNameValid(headingName))
             {
-                Heading heading = new Heading(headingName);
-                context.Headings.Add(heading);
-                context.SaveChanges();
+                HeadingDto headingDto = new HeadingDto
+                {
+                    Name = headingName
+                };
+                headingService.AddHeading(unitOfWork, headingDto);
                 return true;
             }
             return false;
         }
 
-        public Heading FindHeading(string name)
+        public HeadingDto FindHeading(string name)
         {
             if (validation.IsNameValid(name))
-                return headingService.FindHeading(context, name);
+                return headingService.FindHeading(unitOfWork, name);
             return null;
         }
 
      
         public string FindAllHeadings()
         {
-            List<Heading> list = headingService.FindAllHeadings(context);
+            List<HeadingDto> list = headingService.FindAllHeadings(unitOfWork);
             return string.Join(Environment.NewLine, list.Select(h => h.Name));
 
         }
@@ -120,28 +141,28 @@ namespace BLL
         {
             if (validation.IsNameValid(name))
             {
-                Heading heading = headingService.FindHeading(context, headingName);
-                if (heading == null)
-                    throw new Exception("Такої рубрики не існує");
 
-                categoryService.AddCategory(context, name, heading);
-                Category category = FindCategory(name);
-                headingService.AddCategoryToHeading(context, heading, category);
+                CategoryDto categoryDto = new CategoryDto
+                {
+                    Name = name,
+                    Heading = new HeadingDto { Name = headingName}
+                };
+                categoryService.AddCategory(unitOfWork, categoryDto);
                 return true;
             }
             return false;
         }
 
-        public Category FindCategory(string name)
+        public CategoryDto FindCategory(string name)
         {
             if (validation.IsNameValid(name))
-                return categoryService.FindCategory(context, name);
+                return categoryService.FindCategory(unitOfWork, name);
             return null;
         }
  
         public string FindAllCategories()
         {
-            List<Category> list = categoryService.FindAllCategories(context);
+            var list = categoryService.FindAllCategories(unitOfWork);
 
             var grouped = list.GroupBy(c => c.Heading.Name);
 
@@ -166,30 +187,28 @@ namespace BLL
         {
             if (validation.IsNameValid(name))
             {
-                Category category = categoryService.FindCategory(context, categoryName);
-                if (category == null)
-                    throw new Exception("Такої категорії не існує");
-
-                Subcategory subcategory = new Subcategory(name, category);
-                context.Subcategories.Add(subcategory);
-                categoryService.AddSubcategoryToCategory(context, category, subcategory);
-                context.SaveChanges();
+                SubcategoryDto subcategoryDto = new SubcategoryDto
+                {
+                    Name = name,
+                    Category = new CategoryDto { Name = categoryName }
+                };
+                subcategoryService.AddSubcategory(unitOfWork, subcategoryDto);
                 return true;
             }
             return false;
         }
 
-        public Subcategory FindSubcategory(string name)
+        public SubcategoryDto FindSubcategory(string name)
         {
             if (validation.IsNameValid(name))
-                return subcategoryService.FindSubcategory(context, name);
+                return subcategoryService.FindSubcategory(unitOfWork, name);
             return null;
         }
 
         public string FindAllSubcategories()
         {
            
-            List<Subcategory> list = subcategoryService.FindAllSubcategories(context);
+            var list = subcategoryService.FindAllSubcategories(unitOfWork);
             var grouped = list.GroupBy(c => c.Category.Name);
 
             string result = "";
@@ -210,20 +229,23 @@ namespace BLL
         //TAG MENU
         //
         public bool AddTag(string tagName)
-        { 
-            Tag tag = new Tag(tagName);
-            return tagService.AddTag(context, tag);
+        {
+            if (tagName.Count() < 2)
+                throw new ValidationException("Тег занадто короткий");
+
+            TagDto tagDto = new TagDto { Name = tagName };
+            return tagService.AddTag(unitOfWork, tagDto);
         }
 
-        public Tag FindTag(string tagName)
+        public TagDto FindTag(string tagName)
         {
-            return tagService.FindTagByName(context, tagName);   
+            return tagService.FindTagByName(unitOfWork, tagName);   
         }
 
 
         public string FindAllTags()
         {
-            List<Tag> list = tagService.FindAllTags(context);
+            var list = tagService.FindAllTags(unitOfWork);
             return string.Join(Environment.NewLine, list.Select(t => t.Name));
         }
 
@@ -234,51 +256,52 @@ namespace BLL
 
         public bool AddAnnouncement(string title, string description, string categoryName, string subcategoryName, List<string> tagNames, string username)
         {
-            User user = userService.FindUserByUsername(context, username);
-            Category category = categoryService.FindCategory(context, categoryName);
-            Subcategory subcategory = subcategoryService.FindSubcategory(context, subcategoryName);
-            List<Tag> tags = new List<Tag>();
+            UserDto user = userService.FindUserByUsername(unitOfWork, username);
+            List<TagDto> tags = new List<TagDto>();
             foreach (string tagName in tagNames)
             {
                 tags.Add(FindTag(tagName));
             }
+
             if (user != null)
             {
+                if (announcementService.FindAnnouncementByTitle(unitOfWork, title) != null)
+                    throw new ValidationException("У вас вже існує оголошення з такою назвою");
+
                 if (validation.IsNameValid(title) && validation.IsDescriptionValid(description))
                 {
-                    Announcement announcement = new Announcement(category, subcategory, tags, title, description, user);
-                    announcementService.AddAnnouncement(context, announcement);
-                    category.Announcements.Add(announcement);
-                    subcategory.Announcements.Add(announcement);
-                    foreach (Tag tag in tags)
+                    AnnouncementDto announcementDto = new AnnouncementDto
                     {
-                        tag.Announcements.Add(announcement);
-                    }
-                    user.Announcements.Add(announcement);
-                    context.SaveChanges();
-                    return true;
+                        Title = title,
+                        Description = description,
+                        Category = new CategoryDto { Name = categoryName},
+                        Username = username,
+                        Subcategory = new SubcategoryDto { Name = subcategoryName},
+                        Tags = tags
+                    };
+                    announcementService.AddAnnouncement(unitOfWork, announcementDto);
                 }
             }
             return false;
         }
 
-        public Announcement FindAnnouncement(string name)
+        public AnnouncementDto FindAnnouncement(string name)
         {
             if (validation.IsNameValid(name))
-                return announcementService.FindAnnouncementByTitle(context, name);
+                return announcementService.FindAnnouncementByTitle(unitOfWork, name);
             return null;
         }
 
         public string FindAnnouncementByTag(string tagName)
         {
-            Tag tag = tagService.FindTagByName(context, tagName);
+            TagDto tag = tagService.FindTagByName(unitOfWork, tagName);
             if (tag == null)
                 return "Тег не знайдено.";
             var announcements = tag.Announcements;
             if (announcements == null)
                 return "Оголошень за таким тегом не знайдено";
             string allInfo = "";
-            foreach (Announcement a in announcements)
+            foreach (var a in announcements)
             {
                 allInfo += a.GetInfo() + "\n";
             }
@@ -288,23 +311,22 @@ namespace BLL
         public string FindAllAnnouncements()
         {
             string allInfo = "";
-            List<Announcement> list =  announcementService.FindAllAnnouncements(context);
-            foreach(Announcement a in list)
+            var list =  announcementService.FindAllAnnouncements(unitOfWork);
+            foreach(var a in list)
             {
                 allInfo += a.GetInfo() + "\n";
             }
             return allInfo;
         }
 
-        public bool DeleteAnnouncement(string title, string username, string password)
+        public bool DeleteAnnouncement(string title, string username)
         {
-           Announcement announcement = announcementService.FindAnnouncementByTitle(context, title);
-            User user = userService.FindUserByUsername(context, username);  
+           var announcement = announcementService.FindAnnouncementByTitle(unitOfWork, title);
             if (announcement == null)
                 throw new ValidationException("Такого оголошення не існує");
-            if(announcement.User.Username == user.Username)
+            if(announcement.Username == username)
             {
-                announcementService.DeleteAnnouncement(context, announcement, user);
+                announcementService.DeleteAnnouncement(unitOfWork, title, username);
                 return true;
             }
             return false;

@@ -11,13 +11,13 @@ namespace DAL
         {
             Name = name;
             Category = category;
+            Announcements = new List<Announcement>();
         }    
         public int SubcategoryId { get; set; }
         public string Name { get; set; }
 
         public int CategoryId { get; set; }
         public virtual Category Category { get; set; }
-
         public virtual ICollection<Announcement> Announcements { get; set; }
     }
 }

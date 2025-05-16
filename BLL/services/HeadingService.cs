@@ -1,34 +1,36 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AutoMapper;
 using DAL;
 
 namespace BLL.services
 {
     public class HeadingService
     {
-        public bool AddHeading(BoardContext context, Heading heading)
+        IMapper mapper;
+        public HeadingService(IMapper mapper)
         {
-            if (FindHeading(context, heading.Name) != null)
+            this.mapper = mapper;
+        }
+        public bool AddHeading(UnitOfWork unitOfWork, HeadingDto headingDto)
+        {
+            if (FindHeading(unitOfWork, headingDto.Name) != null)
                 throw new ValidationException("Така рубрика вже існує");
 
-            context.Headings.Add(heading);
-            context.SaveChanges();
+            var heading = mapper.Map<Heading>(headingDto);
+            unitOfWork.GetRepository<Heading>().Add(heading);
+            unitOfWork.Save();
             return true;
         }
 
-        public void AddCategoryToHeading(BoardContext context,Heading heading, Category category)
+        public HeadingDto FindHeading(UnitOfWork unitOfWork, string name)
         {
-            heading.Categories.Add(category);
-            context.SaveChanges();
-        }
-        public Heading FindHeading(BoardContext context, string name)
-        {
-            return context.Headings.FirstOrDefault(h => h.Name.ToLower() == name.ToLower());
+            return mapper.Map<HeadingDto>(unitOfWork.GetRepository<Heading>().Find(h => h.Name == name));
         }
 
-        public List<Heading> FindAllHeadings(BoardContext context)
+        public List<HeadingDto> FindAllHeadings(UnitOfWork unitOfWork)
         {
-            return context.Headings.ToList();
+            return mapper.Map<List<HeadingDto>>(unitOfWork.GetRepository<Heading>().GetAll());
         }
 
     }

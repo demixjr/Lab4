@@ -1,37 +1,40 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting.Contexts;
+using AutoMapper;
 using DAL;
 
 namespace BLL
 {
-    internal class CategoryService
+    public class CategoryService
     {
-        public bool AddCategory(BoardContext context, string categoryName, Heading heading)
+        IMapper mapper;
+        public CategoryService(IMapper mapper) 
         {
-            Category newCategory = new Category (categoryName, heading);
-            context.Categories.Add(newCategory);
-            context.SaveChanges();
+            this.mapper = mapper;
+        }
+        public bool AddCategory(UnitOfWork unitOfWork, CategoryDto categoryDto)
+        {
+            var category = mapper.Map<Category>(categoryDto);
+            var heading = unitOfWork.GetRepository<Heading>().Find(h => h.Name == categoryDto.Heading.Name);
+            if (heading == null)
+                throw new EntityNotFoundException("Такої рубрики не знайдено");
+
+            heading.Categories.Add(category);
+            category.Heading = heading;
+            unitOfWork.GetRepository<Category>().Add(category);
+            unitOfWork.GetRepository<Heading>().Update(heading);
+            unitOfWork.Save();
             return true;
         }
-        public void AddSubcategoryToCategory(BoardContext context, Category category, Subcategory subcategory)
+        public CategoryDto FindCategory(UnitOfWork unitOfWork, string name)
         {
-            category.Subcategories.Add(subcategory);
-            context.SaveChanges();
-        }
-        public void AddAnnouncementToCategory(BoardContext context,Announcement announcement, Category category)
-        {
-            category.Announcements.Add(announcement);
-            context.SaveChanges();
-        }
-        public Category FindCategory(BoardContext context, string name)
-        {
-            return context.Categories.FirstOrDefault(c => c.Name.ToLower() == name.ToLower());
+            return mapper.Map<CategoryDto>(unitOfWork.GetRepository<Category>().Find(c => c.Name == name));
         }
 
-        public List<Category> FindAllCategories(BoardContext context)
+        public List<CategoryDto> FindAllCategories(UnitOfWork unitOfWork)
         {
-            return context.Categories.ToList();
+            return mapper.Map<List<CategoryDto>>(unitOfWork.GetRepository<Category>().GetAll());
         }
     }
 }

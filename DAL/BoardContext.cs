@@ -5,7 +5,7 @@ namespace DAL
     {
         public BoardContext() : base("BoardDB") 
         {
-            Database.SetInitializer(new DropCreateDatabaseAlways<BoardContext>());
+           
         }
         public DbSet<Announcement> Announcements { get; set; }
         public DbSet<Category> Categories { get; set; }

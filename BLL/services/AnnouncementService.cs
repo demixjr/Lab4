@@ -3,45 +3,100 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using DAL;
 
 namespace BLL.services
 {
     public class AnnouncementService
     {
-        public bool AddAnnouncement(BoardContext context, Announcement announcement)
+        IMapper mapper;
+        public AnnouncementService(IMapper mapper)
+        {
+            this.mapper = mapper;
+        }
+        public bool AddAnnouncement(UnitOfWork unitOfWork, AnnouncementDto announcementDto)
         {
 
-            if (FindAnnouncementByTitle(context, announcement.Title) != null)
+            if (FindAnnouncementByTitle(unitOfWork, announcementDto.Title) != null)
                 throw new ValidationException("Оголошення з такою назвою вже існує");
 
-            context.Announcements.Add(announcement);
-            context.SaveChanges();
+            var announcement = mapper.Map<Announcement>(announcementDto);
+        
+            var user = unitOfWork.GetRepository<User>().Find(u => u.Username == announcementDto.Username);
+            user.Announcements.Add(announcement);
+            var category = unitOfWork.GetRepository<Category>().Find(c => c.Name == announcementDto.Category.Name);
+            if (category == null)
+                throw new EntityNotFoundException("Такої категорії не існує. Оголошення не буде створено");
+            category.Announcements.Add(announcement);
+            var subcategory = unitOfWork.GetRepository<Subcategory>().Find(s => s.Name == announcementDto.Subcategory.Name);
+            if (subcategory == null)
+                throw new EntityNotFoundException("Такої підкатегорії не існує. Оголошення не буде створено");
+            subcategory.Announcements.Add(announcement);
+            ICollection<Tag> tags = new List<Tag>();
+            foreach(TagDto tagDto in announcementDto.Tags)
+            {
+                var tag = unitOfWork.GetRepository<Tag>().Find(t => t.Name == tagDto.Name);
+                if (tag == null)
+                    throw new EntityNotFoundException("Тег не знайдено, не вдалося зареєструвати оголошення");
+                tags.Add(tag);
+            }
+
+            announcement.User = user;
+            announcement.Category = category;
+            announcement.Subcategory = subcategory;
+            announcement.Tags = tags;
+
+            foreach (var tag in tags)
+            {
+                tag.Announcements.Add(announcement);
+                unitOfWork.GetRepository<Tag>().Update(tag); 
+            }
+          
+            unitOfWork.GetRepository<Announcement>().Add(announcement);
+            unitOfWork.GetRepository<User>().Update(user);
+            unitOfWork.GetRepository<Category>().Update(category);
+            unitOfWork.GetRepository<Subcategory>().Update(subcategory);
+          
+            unitOfWork.Save();
             return true;
         }
 
-        public Announcement FindAnnouncementByTitle(BoardContext context, string title)
+        public AnnouncementDto FindAnnouncementByTitle(UnitOfWork unitOfWork, string title)
         {
-            return context.Announcements.FirstOrDefault(a => a.Title.ToLower() == title.ToLower());
+            var ann = unitOfWork.GetRepository<Announcement>().Find(x => x.Title == title);
+            var annDto = mapper.Map<AnnouncementDto>(ann);
+            return annDto;
         }
-        public List<Announcement> FindAllAnnouncements(BoardContext context)
+        public List<AnnouncementDto> FindAllAnnouncements(UnitOfWork unitOfWork)
         {
-            return context.Announcements.ToList();
+            var allAnn = unitOfWork.GetRepository<Announcement>().GetAll();
+            var annDto = mapper.Map<List<AnnouncementDto>>(allAnn);
+            return annDto;
         }
-        public bool DeleteAnnouncement(BoardContext context,Announcement announcement, User user)
+        public bool DeleteAnnouncement(UnitOfWork unitOfWork, string title, string username)
         {
-            if(user.Username ==  announcement.Username)
+            var user = unitOfWork.GetRepository<User>().Find(u => u.Username == username);
+            var announcement = unitOfWork.GetRepository<Announcement>().Find(a => a.Title == title);
+            if (user == null) 
+                throw new EntityNotFoundException("Такого користувача не існує");
+            if (announcement == null)
+                throw new EntityNotFoundException("Такого оголошення не існує");
+
+            if(username ==  announcement.Username)
             {
                 List<Tag> tags = announcement.Tags.ToList();
-                context.Announcements.Remove(announcement);
+                var category = announcement.Category;
+                var subcategory = announcement.Subcategory;
+
+                unitOfWork.GetRepository<Announcement>().Remove(announcement);
                 user.Announcements.Remove(announcement);
-                announcement.Subcategory.Announcements.Remove(announcement);
-                announcement.Category.Announcements.Remove(announcement);
+                category.Announcements.Remove(announcement);
                 foreach(Tag tag in tags)
                 {
                     tag.Announcements.Remove(announcement);
                 }
-                context.SaveChanges();
+                unitOfWork.Save();
                 return true;
             }
             else

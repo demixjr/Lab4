@@ -10,6 +10,7 @@ namespace DAL
         {
             Username = username;
             Password = password;
+            Announcements = new List<Announcement>();
         }
         public string Username { get; set; }
         public string Password { get; set; }

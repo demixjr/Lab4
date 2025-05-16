@@ -10,6 +10,7 @@ namespace DAL
         {
             Name = name;
             Heading = heading;
+            Announcements = new List<Announcement>();
         }
         public int CategoryId { get; set; }
         public string Name { get; set; }

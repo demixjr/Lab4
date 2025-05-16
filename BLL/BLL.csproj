@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AutoMapper, Version=10.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\Lab_4\packages\AutoMapper.10.1.1\lib\net461\AutoMapper.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\Lab_4\packages\EntityFramework.6.5.1\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -51,16 +54,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="dto\AnnouncementDto.cs" />
+    <Compile Include="dto\CategoryDto.cs" />
+    <Compile Include="dto\HeadingDto.cs" />
+    <Compile Include="dto\SubcategoryDto.cs" />
+    <Compile Include="dto\TagDto.cs" />
+    <Compile Include="dto\UserDto.cs" />
+    <Compile Include="EntityNotFoundException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Properties\dto\AnnouncementDto.cs" />
+    <Compile Include="Properties\dto\CategoryDto.cs" />
+    <Compile Include="Properties\dto\HeadingDto.cs" />
+    <Compile Include="Properties\dto\SubcategoryDto.cs" />
+    <Compile Include="Properties\dto\TagDto.cs" />
+    <Compile Include="Properties\dto\UserDto.cs" />
     <Compile Include="ServiceFacade.cs" />
+    <Compile Include="MappingProfile.cs" />
     <Compile Include="services\AnnouncementService.cs" />
     <Compile Include="services\CategoryService.cs" />
     <Compile Include="services\HeadingService.cs" />
     <Compile Include="services\SubcategoryService.cs" />
     <Compile Include="services\TagService.cs" />
     <Compile Include="services\UserService.cs" />
-    <Compile Include="services\Validation.cs" />
-    <Compile Include="services\ValidationException.cs" />
+    <Compile Include="Validation.cs" />
+    <Compile Include="ValidationException.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DAL\DAL.csproj">

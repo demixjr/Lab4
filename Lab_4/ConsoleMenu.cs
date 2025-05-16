@@ -17,10 +17,10 @@ namespace Lab_4
         public void Menu()
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-
+            Console.InputEncoding = System.Text.Encoding.UTF8; 
             bool exit = false;
 
-          //  TestInfoForDB();
+          TestInfoForDB();
 
             while (!exit)
             {
@@ -190,11 +190,11 @@ namespace Lab_4
                                         }
                                          catch(EntityNotFoundException enfx)
                                         {
-
+                                        Console.WriteLine(enfx.Message);
                                         }
                                         catch(ValidationException vex)
                                         {
-                                            
+                                        Console.WriteLine(vex.Message);
                                         }
                                         catch(Exception ex)
                                         {
@@ -284,21 +284,20 @@ namespace Lab_4
             }
         }
 
-    /*    public void TestInfoForDB()
+      public void TestInfoForDB()
         {
             facade.AddHeading("Нерухомість");
-            facade.AddCategory("Продаж", "Нерухомість");
-            facade.AddCategory("Оренда", "Нерухомість");
-            facade.AddSubcategory("Квартира", "Оренда");
-            facade.AddSubcategory("Будинок", "Продаж");
-            facade.AddSubcategory("Комерційна нерухомість", "Продаж");
-            facade.AddSubcategory("Земельна ділянка", "Продаж");
-            facade.AddSubcategory("Гараж", "Продаж");
+            facade.AddCategory("Продаж нерухомості", "Нерухомість");
+            facade.AddCategory("Оренда нерухомості", "Нерухомість");
+            facade.AddSubcategory("Квартира", "Оренда нерухомості");
+            facade.AddSubcategory("Будинок", "Продаж нерухомості");
+            facade.AddSubcategory("Земельна ділянка", "Продаж нерухомості");
+            facade.AddSubcategory("Гараж", "Продаж нерухомості");
 
             facade.AddHeading("Транспорт");
             facade.AddCategory("Продаж транспорту", "Транспорт");
             facade.AddCategory("Транспортні послуги", "Транспорт");
-            facade.AddCategory("Оренда транспорту", "транспорт");
+            facade.AddCategory("Оренда транспорту", "Транспорт");
             facade.AddSubcategory("Легкові авто", "Оренда транспорту");
             facade.AddSubcategory("Мотоцикли", "Продаж транспорту");
             facade.AddSubcategory("Вантажівки", "Продаж транспорту");
@@ -395,7 +394,8 @@ namespace Lab_4
                 "user4"
             );
         }
-    */
+     
+    
     }
 
     
